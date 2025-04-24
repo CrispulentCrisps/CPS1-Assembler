@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	//Clear out 
 	variables.clear();
 	labels.clear();
 	codelines.clear();
@@ -57,6 +58,7 @@ bool OpenFile(int argc, char** argv)
 		return false;
 	}
 
+	//Open input file
 	input = fopen(argv[1], "r");
 	if (input == NULL)
 	{
@@ -69,10 +71,10 @@ bool OpenFile(int argc, char** argv)
 	//Output file for the target architecture
 	output = fopen(argv[2], "wb");
 
-	//Find file size
-	fseek(input, 0, SEEK_END);
-	int size = ftell(input);
-	rewind(input);
+	////Find file size
+	//fseek(input, 0, SEEK_END);
+	//int size = ftell(input);
+	//rewind(input);
 
 	return true;
 }

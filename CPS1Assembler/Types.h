@@ -127,6 +127,18 @@ enum ex_keyword {
 	ex_len,			//Length of extra keywords enum
 };
 
+enum num_type {
+	dec,			//Decimal			|	Raw decimal value					|	4
+	hex,			//Hexadecimal		|	Denoted with $ before the value		|	$04
+	bin,			//Binary			|	Denoted with 0b before the value	|	$0b00000100
+};
+
+enum addr_type {
+	imm,			//Immediate			|	Denoted with a # before the value	|	ld A, #$09
+	ptr,			//Pointer			|	Denoted as a pair of parenthises	|	ld A, (BC)
+	loc,			//Memory location	|	Deonted as the raw value			|	ld A, $02
+};
+
 std::string Z80_opcode_ident[opcode_len] = {
 	"LD ",
 	"PUSH ",
