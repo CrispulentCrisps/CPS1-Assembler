@@ -1,7 +1,11 @@
-arch Z80
+arch_Z80
 
+ld B, #$04
 ld A, #$10
 nop
 nop
 nop
-sub A, B
+
+MainLabel:
+	sub A, B
+	jp MainLabel
