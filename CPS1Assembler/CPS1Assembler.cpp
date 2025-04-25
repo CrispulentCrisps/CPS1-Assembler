@@ -15,9 +15,10 @@
 FILE* input;     //Input file
 FILE* output;    //Output file
 
-std::vector<VariableDef> variables;  //Variables list
-std::vector<LabelDef> labels;        //Label list
-std::vector<std::string> codelines;  //List of code lines
+std::vector<VariableDef> Variables;		//Variables list
+std::vector<LabelDef> Labels;			//Label list
+std::vector<std::string> CodeLines;		//List of code lines
+std::vector<ComLine> ComList;			//List of parsed commands
 arch_type arch;
 
 int main(int argc, char** argv)
@@ -28,10 +29,11 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	//Clear out 
-	variables.clear();
-	labels.clear();
-	codelines.clear();
+	//Clear out lists
+	Variables.clear();
+	Labels.clear();
+	CodeLines.clear();
+	//Read through file and store to array
 	ParseLines();
 	arch = DetermineArch();
 	if (arch == arch_Z80)
@@ -54,50 +56,36 @@ int main(int argc, char** argv)
 	}
 
 	std::cout << "\nVariables\n";
-	for (int x = 0; x < variables.size(); x++)
+	for (int x = 0; x < Variables.size(); x++)
 	{
-		std::cout << "\nVar name: " << variables[x].Name << "\nVar location: " << std::hex << variables[x].memloc;
+		std::cout << "\nVar name: " << Variables[x].Name << "\nVar location: " << std::hex << Variables[x].memloc;
 	}
 
 	std::cout << "\nLabels\n";
-	for (int x = 0; x < labels.size(); x++)
+	for (int x = 0; x < Labels.size(); x++)
 	{
-		std::cout << "\nLabel name: " << labels[x].Name << "\nLabel Start: " << std::hex << labels[x].startloc << "\nLabel End: " << std::hex << labels[x].endloc;
+		std::cout << "\nLabel name: " << Labels[x].Name << "\nLabel Start: " << std::hex << Labels[x].startloc << "\nLabel End: " << std::hex << Labels[x].endloc;
 	}
 
 	return 0;
 }
 
-void ParseLines()
-{
-	int panic = 0;
-	char line[4096];
-	while (fgets(line, sizeof(line), input))
-	{
-		codelines.push_back(line);
-		std::cout << line;
-		panic++;
-		if (panic > 9999999) return;
-		ParseLines();
-	}
-}
-
 //Read through file to identify Z80 commands
 int Interpret_Z80()
 {
-	for (int x = 0; x < codelines.size(); x++)
+	for (int x = 0; x < CodeLines.size(); x++)
 	{
-		std::string curline = codelines[x];		//Current line instruction
+		std::string curline = CodeLines[x];		//Current line instruction
 		std::string linebuf = "";				//Buffer for reading correct instruction
-		for (int y = 0; y < codelines[x].size(); y++)
+		for (int y = 0; y < CodeLines[x].size(); y++)
 		{
-			linebuf += codelines[x][y];
+			linebuf += CodeLines[x][y];
 			//Check for label names, make sure labels have at least 1 character more than just :
-			if (y < codelines[x].size())
+			if (y < CodeLines[x].size())
 			{
 				if (linebuf[y] == LABEL_END && linebuf.size() > 1)
 				{
-					labels.push_back(AddLabel(linebuf));
+					Labels.push_back(AddLabel(linebuf));
 					break;
 				}
 			}
@@ -138,7 +126,7 @@ int DetermineCommand_Z80(std::string com)
 		comcheck[x] = toupper(com[x]);
 	}
 
-	for (int x = 0; x < Z80_len; x++)
+	for (int x = 0; x < z80_opcode_len; x++)
 	{
 		if (comcheck == Z80_opcode_ident[x]) return x;
 	}
@@ -147,9 +135,12 @@ int DetermineCommand_Z80(std::string com)
 //Call appropriate function based off of command type
 void HandleComType_Z80(int comind, int lineind)
 {
+	ComLine com = ComLine();
+	com.type = Z80;
 	switch (comind)
 	{
 	case LD:
+		Determine_LD(&com, CodeLines[lineind]);
 		break;
 	case PUSH:
 		break;
@@ -282,6 +273,11 @@ void HandleComType_Z80(int comind, int lineind)
 	}
 }
 
+void Determine_LD(ComLine* com, std::string line)
+{
+
+}
+
 //Generate bytecode based on Z80 instruction set
 int Generate_Z80()
 {
@@ -298,15 +294,26 @@ int Generate_M68K()
 	return M68K_FINE;
 }
 
+//Read file and split into lines
+void ParseLines()
+{
+	char line[ASM_MAXCHARS];
+	while (fgets(line, sizeof(line), input))
+	{
+		CodeLines.push_back(line);
+		std::cout << line;
+	}
+}
+
 //Determine which architecture the file is
 arch_type DetermineArch()
 {
-	for (int x = 0; x < codelines.size(); x++)
+	for (int x = 0; x < CodeLines.size(); x++)
 	{
-		if (codelines[x] == ex_keyword_ident[arch_Z80]) { return Z80; }
-		else if (codelines[x] == ex_keyword_ident[arch_M68K]) { return M68K; }
+		if (CodeLines[x] == ex_keyword_ident[arch_Z80]) { return ARCT_Z80; }
+		else if (CodeLines[x] == ex_keyword_ident[arch_M68K]) { return ARCT_M68K; }
 	}
-	return NOARCH;
+	return ARCT_NoArch;
 }
 
 LabelDef AddLabel(std::string name)
@@ -326,6 +333,12 @@ int DetermineAssemblerCommand(std::string com)
 		if (com == ex_keyword_ident[x]) return x;
 	}
 	return COM_NULL;
+}
+
+std::string GetInstructionArgs(int lineind)
+{
+
+	return std::string();
 }
 
 bool OpenFile(int argc, char** argv)

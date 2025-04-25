@@ -1,0 +1,77 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{05ADA2C9-975D-4E62-90F2-B79560804179}|CPS1Assembler.vcxproj|E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\CPS1Assembler.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{05ADA2C9-975D-4E62-90F2-B79560804179}|CPS1Assembler.vcxproj|solutionrelative:CPS1Assembler.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{05ADA2C9-975D-4E62-90F2-B79560804179}|CPS1Assembler.vcxproj|E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\CPS1Assembler.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{05ADA2C9-975D-4E62-90F2-B79560804179}|CPS1Assembler.vcxproj|solutionrelative:CPS1Assembler.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{05ADA2C9-975D-4E62-90F2-B79560804179}|CPS1Assembler.vcxproj|E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\Types.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{05ADA2C9-975D-4E62-90F2-B79560804179}|CPS1Assembler.vcxproj|solutionrelative:Types.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 285,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "CPS1Assembler.cpp",
+              "DocumentMoniker": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\CPS1Assembler.cpp",
+              "RelativeDocumentMoniker": "CPS1Assembler.cpp",
+              "ToolTip": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\CPS1Assembler.cpp",
+              "RelativeToolTip": "CPS1Assembler.cpp",
+              "ViewState": "AgIAAEoAAAAAAAAAAADgv2QAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-04-25T14:32:14.245Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 285,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Types.h",
+              "DocumentMoniker": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\Types.h",
+              "RelativeDocumentMoniker": "Types.h",
+              "ToolTip": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\Types.h",
+              "RelativeToolTip": "Types.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-04-25T14:32:14.357Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CPS1Assembler.h",
+              "DocumentMoniker": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\CPS1Assembler.h",
+              "RelativeDocumentMoniker": "CPS1Assembler.h",
+              "ToolTip": "E:\\git\\cps1asm\\CPS1-Assembler\\CPS1Assembler\\CPS1Assembler.h",
+              "RelativeToolTip": "CPS1Assembler.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-04-25T14:32:14.362Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

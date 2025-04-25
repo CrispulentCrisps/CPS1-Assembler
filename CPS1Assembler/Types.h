@@ -7,9 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//Asm functions
+#define ASM_MAXCHARS	0x0FFF	//Max characters in the linebuffer for parsing
+
 //Assembler conditions
-#define Z80_FINE 			0
-#define M68K_FINE 			0
+#define Z80_FINE 		0
+#define M68K_FINE 		0
 
 //Label identifiers
 #define LABEL_END		':'		//Character to check for end of label
@@ -41,9 +44,16 @@ typedef signed long		s32;
 
 //Architecture for current file
 enum arch_type {
-	NOARCH,				//Used for checking if the file has an architecture
-	Z80,				//Z80 architecture
-	M68K,				//M68K architecture
+	ARCT_NoArch,		//Used for checking if the file has an architecture
+	ARCT_Z80,			//Z80 architecture
+	ARCT_M68K,			//M68K architecture
+};
+
+enum com_type {
+	BAD,				//Bad command type, something has went wrong
+	ASM,				//Assembler command
+	Z80,				//Z80 command
+	M68K,				//M68K command
 };
 
 //List of keywords for Z80 opcodes, sourced here: 
@@ -116,9 +126,10 @@ enum Z80_keywords {
 	OTIR,
 	OUTD,
 	OTDR,
-	opcode_len,
+	z80_opcode_len,
+};
 
-	//Main registers
+enum Z80_registers {
 	A,
 	B,
 	C,
@@ -138,10 +149,7 @@ enum Z80_keywords {
 	IYH,
 	IYL,
 	SP,
-	PC,
-
-	//Length
-	Z80_len,
+	z80_reg_len,
 };
 
 //Extra commands specific to the assembler and not of any chips
@@ -158,18 +166,6 @@ enum ex_keyword {
 	ex_len,			//Length of extra keywords enum
 };
 
-//List of keyword identifiers for assembler operations
-std::string ex_keyword_ident[ex_len] = {
-	"arch_Z80", 
-	"arch_M68K",
-	"incsrc ",
-	"incbin ",
-	"org ",
-	"db ",
-	"dw ",
-	"dl ",
-};
-
 enum num_type {
 	dec,			//Decimal			|	Raw decimal value					|	4
 	hex,			//Hexadecimal		|	Denoted with $ before the value		|	$04
@@ -182,7 +178,8 @@ enum addr_type {
 	loc,			//Memory location	|	Deonted as the raw value			|	ld A, $02
 };
 
-std::string Z80_opcode_ident[opcode_len] = {
+//List of identifiable command types in the Z80 architecture
+std::string Z80_opcode_ident[z80_opcode_len] = {
 	"LD ",
 	"PUSH ",
 	"POP ",
@@ -250,6 +247,40 @@ std::string Z80_opcode_ident[opcode_len] = {
 	"OTDR ",
 };
 
+std:: string Z80_register_ident[z80_reg_len]{
+	"A",
+	"B",
+	"C",
+	"D",
+	"E",
+	"F",
+	"H",
+	"L",
+	"AF",
+	"BC",
+	"DE",
+	"HL",
+	"IX",
+	"IXH",
+	"IXL",
+	"IY",
+	"IYH",
+	"IYL",
+	"SP",
+};
+
+//List of keyword identifiers for assembler operations
+std::string ex_keyword_ident[ex_len] = {
+	"arch_Z80",
+	"arch_M68K",
+	"incsrc ",
+	"incbin ",
+	"org ",
+	"db ",
+	"dw ",
+	"dl ",
+};
+
 //Variables, defined as
 //
 //	VarName1 = $20
@@ -274,14 +305,8 @@ typedef struct {
 	u32 endloc;			//Ending memory location of variable
 } LabelDef;
 
-//Z80 Opcode definitions for code generation
 typedef struct {
-	u8 bytecode;
-	u16 value;
-} Z80Opcode;
-
-//M68K Opcode definitions
-typedef struct {
-	u16 bytecode;
-	u32 value;
-} M68KOpcode;
+	u32 id;				//Current ID of command
+	u32 value;			//Value of command
+	com_type type;		//Type of command
+} ComLine;
