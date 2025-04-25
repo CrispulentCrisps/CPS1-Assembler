@@ -16,7 +16,6 @@
     - Handle variables
     - Handle labels
     - Add bytecode generation table
-    - 
     
  - Code parsing
     - make incsrc functional
@@ -25,4 +24,3 @@
     - Determine address width based off of variable value
     - Recognise different number bases
     - Recognise instructions and registers
-    - 
