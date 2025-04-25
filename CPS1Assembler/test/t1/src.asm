@@ -9,3 +9,7 @@ nop
 MainLabel:
 	sub A, B
 	jp MainLabel
+
+db $01
+dw $0201
+dl $04030201

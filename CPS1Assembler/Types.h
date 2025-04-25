@@ -13,7 +13,7 @@
 
 //Label identifiers
 #define LABEL_END		':'		//Character to check for end of label
-#define SUBLABEL_END	'.'		//Character to check for the start of a sublabel
+#define SUBLABEL_START	'.'		//Character to check for the start of a sublabel
 
 //Data type identifiers
 #define IMM_IDENT		'#'
@@ -25,6 +25,9 @@
 #define RETURN			"\n"	//Newline character
 #define SPACE			" "		//Space character
 #define COMMENT			";"		//Comment identifier
+#define COMMA			","		//Comma seperator for certain instructions
+
+#define VAR_SET			"="		//Assigner for variable data
 
 //Command identifiers
 #define COM_NULL		0xFFFF
@@ -43,7 +46,9 @@ enum arch_type {
 	M68K,				//M68K architecture
 };
 
-//List of keywords for Z80 opcodes, sourced here: https://www.zilog.com/docs/z80/um0080.pdf and https://clrhome.org/table/
+//List of keywords for Z80 opcodes, sourced here: 
+//https://www.zilog.com/docs/z80/um0080.pdf 
+//and https://clrhome.org/table/
 enum Z80_keywords {
 	//Instructions
 	LD,
@@ -269,7 +274,7 @@ typedef struct {
 	u32 endloc;			//Ending memory location of variable
 } LabelDef;
 
-//Z80 Opcode definitions
+//Z80 Opcode definitions for code generation
 typedef struct {
 	u8 bytecode;
 	u16 value;
