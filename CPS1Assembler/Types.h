@@ -18,17 +18,27 @@
 #define LABEL_END		':'		//Character to check for end of label
 #define SUBLABEL_START	'.'		//Character to check for the start of a sublabel
 
-//Data type identifiers
-#define IMM_IDENT		'#'
-#define PTR_OPEN_IDENT	'('
-#define PTR_CLOSE_IDENT	')'
+//Token identifiers
+#define TOKEN_IMM		'#'
+#define TOKEN_HEX		'$'
+#define TOKEN_BIN		'%'
+#define TOKEN_BOPEN		'('
+#define TOKEN_BCLOSE	')'
+#define TOKEN_SEPERATOR ','
+#define TOKEN_ADD		'+'
+#define TOKEN_SUB		'-'
+#define TOKEN_MUL		'*'
+#define TOKEN_DIV		'/'
+#define TOKEN_AND		'&'
+#define TOKEN_OR		'|'
+#define TOKEN_XOR		'^'
+#define TOKEN_NOT		'~'
 
 //List of exclusive characters
 #define TAB				"\t"	//Tab character
 #define RETURN			"\n"	//Newline character
 #define SPACE			" "		//Space character
 #define COMMENT			";"		//Comment identifier
-#define COMMA			","		//Comma seperator for certain instructions
 
 #define VAR_SET			"="		//Assigner for variable data
 
@@ -56,9 +66,7 @@ enum com_type {
 	M68K,				//M68K command
 };
 
-//List of keywords for Z80 opcodes, sourced here: 
-//https://www.zilog.com/docs/z80/um0080.pdf 
-//and https://clrhome.org/table/
+//List of keywords for Z80 opcodes, sourced here:https://www.zilog.com/docs/z80/um0080.pdf and https://clrhome.org/table/
 enum Z80_keywords {
 	//Instructions
 	LD,
@@ -96,18 +104,21 @@ enum Z80_keywords {
 	IM0,
 	IM1,
 	IM2,
+	RLC,
 	RLCA,
 	RLA,
+	RRC,
 	RRCA,
 	RRA,
 	RL,
 	RR,
 	SLA,
 	SRA,
+	SRL,
 	RLD,
 	RRD,
 	BIT,
-	SET,
+	SET,	
 	RES,
 	JP,
 	JR,
@@ -138,16 +149,21 @@ enum Z80_registers {
 	F,
 	H,
 	L,
+	R,
 	AF,
+	AFp,			//Equal to AF'
 	BC,
 	DE,
 	HL,
 	IX,
+	IXpD,		//Equal to IX+D
 	IXH,
 	IXL,
 	IY,
+	IYpD,		//Equal to IY+D
 	IYH,
 	IYL,
+	I,
 	SP,
 	z80_reg_len,
 };
@@ -167,9 +183,9 @@ enum ex_keyword {
 };
 
 enum num_type {
-	dec,			//Decimal			|	Raw decimal value					|	4
-	hex,			//Hexadecimal		|	Denoted with $ before the value		|	$04
-	bin,			//Binary			|	Denoted with 0b before the value	|	$0b00000100
+	n_dec,			//Decimal			|	Raw decimal value					|	4
+	n_hex,			//Hexadecimal		|	Denoted with $ before the value		|	$04
+	n_bin,			//Binary			|	Denoted with 0b before the value	|	0b00000100
 };
 
 enum addr_type {
@@ -178,108 +194,38 @@ enum addr_type {
 	loc,			//Memory location	|	Deonted as the raw value			|	ld A, $02
 };
 
+enum token_type {
+	//universal
+	t_number,			//Handles all numbers regardless of type
+	t_ident,			//Identifiers for variables, constants
+	t_bropen,			//Opening bracket,			(
+	t_brclose,			//Closing bracket,			)
+	t_seperator,		//Seperator character		,
+	t_imm,				//Immediate character		#
+
+	//Arch specific
+	t_Z80_reg,			//Z80 register
+	t_M68K_reg,			//M68K register
+
+	//Mathematics
+	t_add,				//Addition character,		+
+	t_sub,				//Subtraction character,	-
+	t_mul,				//Multiplication character, *
+	t_div,				//Division character,		/
+	t_and,				//Bitwise AND,				&
+	t_or,				//Bitwise OR,				|
+	t_xor,				//Bitwise XOR,				^
+	t_not,				//Bitwise NOT,				~
+
+	token_len,
+};
+
 //List of identifiable command types in the Z80 architecture
-std::string Z80_opcode_ident[z80_opcode_len] = {
-	"LD ",
-	"PUSH ",
-	"POP ",
-	"EX ",
-	"EXX ",
-	"LDI ",
-	"LDIR ",
-	"LDD ",
-	"LDDR ",
-	"CPI ",
-	"CPIR ",
-	"CPD ",
-	"CPDR ",
-	"ADD ",
-	"ADC ",
-	"SUB ",
-	"SBC ",
-	"AND ",
-	"OR ",
-	"XOR ",
-	"CP ",
-	"INC ",
-	"DEC ",
-	"DAA ",
-	"CPL ",
-	"NEG ",
-	"CCF ",
-	"SCF ",
-	"NOP ",
-	"HALT ",
-	"DI ",
-	"EI ",
-	"IM0 ",
-	"IM1 ",
-	"IM2 ",
-	"RLCA ",
-	"RLA ",
-	"RRCA ",
-	"RRA ",
-	"RL ",
-	"RR ",
-	"SLA ",
-	"SRA ",
-	"RLD ",
-	"RRD ",
-	"BIT ",
-	"SET ",
-	"RES ",
-	"JP ",
-	"JR ",
-	"DJNZ ",
-	"CALL ",
-	"RET ",
-	"RETI ",
-	"RETN ",
-	"RST ",
-	"IN ",
-	"INI ",
-	"IND ",
-	"INDR ",
-	"OUT ",
-	"OUTI ",
-	"OTIR ",
-	"OUTD ",
-	"OTDR ",
-};
+extern std::string Z80_opcode_ident[z80_opcode_len];
 
-std:: string Z80_register_ident[z80_reg_len]{
-	"A",
-	"B",
-	"C",
-	"D",
-	"E",
-	"F",
-	"H",
-	"L",
-	"AF",
-	"BC",
-	"DE",
-	"HL",
-	"IX",
-	"IXH",
-	"IXL",
-	"IY",
-	"IYH",
-	"IYL",
-	"SP",
-};
+extern std::string Z80_register_ident[z80_reg_len];
 
-//List of keyword identifiers for assembler operations
-std::string ex_keyword_ident[ex_len] = {
-	"arch_Z80",
-	"arch_M68K",
-	"incsrc ",
-	"incbin ",
-	"org ",
-	"db ",
-	"dw ",
-	"dl ",
-};
+extern std::string Z80_args_ident[ex_len];
 
 //Variables, defined as
 //
@@ -306,7 +252,19 @@ typedef struct {
 } LabelDef;
 
 typedef struct {
-	u32 id;				//Current ID of command
+	u32 bytecode;		//Bytecode of command
 	u32 value;			//Value of command
 	com_type type;		//Type of command
+	u8 id;				//Current ID of command
 } ComLine;
+
+typedef struct {
+	token_type type;	//
+	u32 value;			//
+} Token;
+
+extern std::vector<VariableDef> Variables;				//Variables list
+extern std::vector<LabelDef> Labels;					//Label list
+extern std::vector<std::string> CodeLines;				//List of code lines
+extern std::vector<ComLine> ComList;					//List of parsed commands
+extern arch_type arch;									//Current architecture type

@@ -21,6 +21,17 @@ std::vector<std::string> CodeLines;		//List of code lines
 std::vector<ComLine> ComList;			//List of parsed commands
 arch_type arch;
 
+std::string ex_keyword_ident[ex_len] = {
+	"arch_Z80",
+	"arch_M68K",
+	"incsrc ",
+	"incbin ",
+	"org ",
+	"db ",
+	"dw ",
+	"dl ",
+};
+
 int main(int argc, char** argv)
 {
 	//Opening source file
@@ -46,9 +57,6 @@ int main(int argc, char** argv)
 	else if (arch == arch_M68K)
 	{
 		std::cout << "\n\nM68K arch detected";
-		if (Interpret_M68K() != M68K_FINE) {
-			std::cout << "\nA M68K ASSEMBLER ERROR HAS OCCURED!";
-		}
 	}
 	else
 	{
@@ -68,220 +76,6 @@ int main(int argc, char** argv)
 	}
 
 	return 0;
-}
-
-//Read through file to identify Z80 commands
-int Interpret_Z80()
-{
-	for (int x = 0; x < CodeLines.size(); x++)
-	{
-		std::string curline = CodeLines[x];		//Current line instruction
-		std::string linebuf = "";				//Buffer for reading correct instruction
-		for (int y = 0; y < CodeLines[x].size(); y++)
-		{
-			linebuf += CodeLines[x][y];
-			//Check for label names, make sure labels have at least 1 character more than just :
-			if (y < CodeLines[x].size())
-			{
-				if (linebuf[y] == LABEL_END && linebuf.size() > 1)
-				{
-					Labels.push_back(AddLabel(linebuf));
-					break;
-				}
-			}
-			//Clear linebuf if these characters found
-			if (linebuf == TAB || linebuf == RETURN || linebuf == SPACE) { linebuf = ""; }
-			//Skip line read if current line is a comment
-			else if (linebuf == COMMENT) { break; }
-
-			//If a usable command has been found
-			int command = DetermineCommand_Z80(linebuf);
-			if (command != COM_NULL)
-			{
-				HandleComType_Z80(command, x);
-				break;
-			}
-			
-			//Check if the command is an assembler specific command
-			command = DetermineAssemblerCommand(linebuf);
-			if (command != COM_NULL)
-			{
-
-				break;
-			}
-
-			//Otherwise continue reading
-		}
-	}
-	return Z80_FINE;
-}
-
-//Determine if current command is a Z80 command
-int DetermineCommand_Z80(std::string com)
-{
-	std::string comcheck = com;
-	//Set string to be uppercase for matching command list
-	for (int x = 0; x < com.size(); x++)
-	{
-		comcheck[x] = toupper(com[x]);
-	}
-
-	for (int x = 0; x < z80_opcode_len; x++)
-	{
-		if (comcheck == Z80_opcode_ident[x]) return x;
-	}
-	return COM_NULL;
-}
-//Call appropriate function based off of command type
-void HandleComType_Z80(int comind, int lineind)
-{
-	ComLine com = ComLine();
-	com.type = Z80;
-	switch (comind)
-	{
-	case LD:
-		Determine_LD(&com, CodeLines[lineind]);
-		break;
-	case PUSH:
-		break;
-	case POP:
-		break;
-	case EX:
-		break;
-	case EXX:
-		break;
-	case LDI:
-		break;
-	case LDIR:
-		break;
-	case LDD:
-		break;
-	case LDDR:
-		break;
-	case CPI:
-		break;
-	case CPIR:
-		break;
-	case CPD:
-		break;
-	case CPDR:
-		break;
-	case ADD:
-		break;
-	case ADC:
-		break;
-	case SUB:
-		break;
-	case SBC:
-		break;
-	case AND:
-		break;
-	case OR:
-		break;
-	case XOR:
-		break;
-	case CP:
-		break;
-	case INC:
-		break;
-	case DEC:
-		break;
-	case DAA:
-		break;
-	case CPL:
-		break;
-	case NEG:
-		break;
-	case CCF:
-		break;
-	case SCF:
-		break;
-	case NOP:
-		break;
-	case HALT:
-		break;
-	case DI:
-		break;
-	case EI:
-		break;
-	case IM0:
-		break;
-	case IM1:
-		break;
-	case IM2:
-		break;
-	case RLCA:
-		break;
-	case RLA:
-		break;
-	case RRCA:
-		break;
-	case RRA:
-		break;
-	case RL:
-		break;
-	case RR:
-		break;
-	case SLA:
-		break;
-	case SRA:
-		break;
-	case RLD:
-		break;
-	case RRD:
-		break;
-	case BIT:
-		break;
-	case SET:
-		break;
-	case RES:
-		break;
-	case JP:
-		break;
-	case JR:
-		break;
-	case DJNZ:
-		break;
-	case CALL:
-		break;
-	case RET:
-		break;
-	case RETI:
-		break;
-	case RETN:
-		break;
-	case RST:
-		break;
-	case IN:
-		break;
-	case INI:
-		break;
-	case IND:
-		break;
-	case INDR:
-		break;
-	case OUT:
-		break;
-	case OUTI:
-		break;
-	case OTIR:
-		break;
-	case OUTD:
-		break;
-	case OTDR:
-		break;
-	}
-}
-
-void Determine_LD(ComLine* com, std::string line)
-{
-
-}
-
-//Generate bytecode based on Z80 instruction set
-int Generate_Z80()
-{
-	return Z80_FINE;
 }
 
 int Interpret_M68K()
@@ -335,10 +129,140 @@ int DetermineAssemblerCommand(std::string com)
 	return COM_NULL;
 }
 
-std::string GetInstructionArgs(int lineind)
+int ReadNumber(std::string line, int& index, num_type type)
 {
+	std::string buf = "";
+	for (int x = index; x < line.size(); x++)
+	{
+		//Decimal check
+		if (type == n_dec)
+		{
+			if (line[x] >= '0' && line[x] <= '9')
+			{
+				buf += line[x];
+			}
+			else { break; }	//Break out if unrecognised character
+		}
+		//Hexadecimal check
+		else if (type == n_hex)
+		{
+			char comp = toupper(line[x]);
+			if ((line[x] >= '0' && line[x] <= '9') || (comp >= 'A' && comp <= 'F'))
+			{
+				buf += line[x];
+			}
+			else { break; }	//Break out if unrecognised character
+		}
+		//Binary check
+		else if (type == n_bin)
+		{
+			if (line[x] >= '0' && line[x] <= '1')
+			{
+				buf += line[x];
+			}
+			else { break; }	//Break out if unrecognised character
+		}
+		index++;
+	}
+	int val = 0;
+	switch (type)
+	{
+	case n_dec:
+		val = strtol(buf.c_str(), NULL, 10);
+		break;
+	case n_hex:
+		val = strtol(buf.c_str(), NULL, 16);
+		break;
+	case n_bin:
+		val = strtol(buf.c_str(), NULL, 2);
+		break;
+	}
+	return val;
+}
 
-	return std::string();
+void TokeniseArguments(std::vector<Token>* tokens, std::string args)
+{
+	Token newtoken;
+	std::string buf = "";
+	for (int x = 0; x < args.size(); x++)
+	{
+		newtoken = Token();
+		buf += args[x];
+		
+		//Break out if comment or carridge return found
+		if (buf == COMMENT || buf == RETURN) { break; }
+
+		//Clear out unessecary characters
+		if (buf == SPACE || buf == TAB) { buf = "";  continue; }
+
+		//Register checking
+		for (int y = 0; y < z80_reg_len; y++)
+		{
+			if (buf == Z80_register_ident[y])
+			{
+				//Registers are always ended by either a return or seperator character
+				if (args[fmin(x, args.size()) + 1] == TOKEN_SEPERATOR || args[fmin(x, args.size()) + 1] == TOKEN_BCLOSE)
+				{
+					newtoken.type = t_Z80_reg;
+					newtoken.value = y;
+					tokens->push_back(newtoken);
+					buf = "";
+					break;
+				}
+			}
+		}
+		//Number checking
+		if (buf[0] >= '0' && buf[0] <= '9') //Decimal
+		{
+			newtoken.type = t_number;
+			newtoken.value = ReadNumber(args, x, n_dec);
+			tokens->push_back(newtoken);
+			buf = "";
+		}
+
+		//Single pass checks
+		switch (buf[0])
+		{
+		case TOKEN_HEX:
+			x++;											//Skip current character for proper digit reading
+			newtoken.type = t_number;
+			newtoken.value = ReadNumber(args, x, n_hex);
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		case TOKEN_BIN:
+			x++;											//Skip current character for proper digit reading
+			newtoken.type = t_number;
+			newtoken.value = ReadNumber(args, x, n_bin);
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		case TOKEN_IMM:
+			newtoken.type = t_imm;
+			newtoken.value = 0;
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		case TOKEN_BOPEN:
+			newtoken.type = t_bropen;
+			newtoken.value = 0;
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		case TOKEN_BCLOSE:
+			newtoken.type = t_brclose;
+			newtoken.value = 0;
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		case TOKEN_SEPERATOR:
+			newtoken.type = t_seperator;
+			newtoken.value = 0;
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		}
+	}
 }
 
 bool OpenFile(int argc, char** argv)
