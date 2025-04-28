@@ -15,7 +15,6 @@
 FILE* input;     //Input file
 FILE* output;    //Output file
 
-std::vector<VariableDef> Variables;		//Variables list
 std::vector<LabelDef> Labels;			//Label list
 std::vector<std::string> CodeLines;		//List of code lines
 std::vector<ComLine> ComList;			//List of parsed commands
@@ -41,7 +40,6 @@ int main(int argc, char** argv)
 	}
 
 	//Clear out lists
-	Variables.clear();
 	Labels.clear();
 	CodeLines.clear();
 	//Read through file and store to array
@@ -61,12 +59,6 @@ int main(int argc, char** argv)
 	else
 	{
 		std::cout << "\nERROR, NO ARCH FOUND\nMISSING arch_Z80 OR arch_M68K";
-	}
-
-	std::cout << "\nVariables\n";
-	for (int x = 0; x < Variables.size(); x++)
-	{
-		std::cout << "\nVar name: " << Variables[x].Name << "\nVar location: " << std::hex << Variables[x].memloc;
 	}
 
 	std::cout << "\nLabels\n";
@@ -257,6 +249,12 @@ void TokeniseArguments(std::vector<Token>* tokens, std::string args)
 			break;
 		case TOKEN_SEPERATOR:
 			newtoken.type = t_seperator;
+			newtoken.value = 0;
+			tokens->push_back(newtoken);
+			buf = "";
+			break;
+		case TOKEN_ADD:
+			newtoken.type = t_add;
 			newtoken.value = 0;
 			tokens->push_back(newtoken);
 			buf = "";

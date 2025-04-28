@@ -8,39 +8,41 @@
 #include <stdlib.h>
 
 //Asm functions
-#define ASM_MAXCHARS	0x0FFF	//Max characters in the linebuffer for parsing
+#define ASM_MAXCHARS		0x0FFF	//Max characters in the linebuffer for parsing
 
 //Assembler conditions
-#define Z80_FINE 		0
-#define M68K_FINE 		0
+#define Z80_FINE 			0
+#define Z80_BAD 			0xFFFF
+#define M68K_FINE 			0
+#define M68K_BAD 			0xFFFF
 
 //Label identifiers
-#define LABEL_END		':'		//Character to check for end of label
-#define SUBLABEL_START	'.'		//Character to check for the start of a sublabel
+#define LABEL_END			':'		//Character to check for end of label
+#define SUBLABEL_START		'.'		//Character to check for the start of a sublabel
 
 //Token identifiers
-#define TOKEN_IMM		'#'
-#define TOKEN_HEX		'$'
-#define TOKEN_BIN		'%'
-#define TOKEN_BOPEN		'('
-#define TOKEN_BCLOSE	')'
-#define TOKEN_SEPERATOR ','
-#define TOKEN_ADD		'+'
-#define TOKEN_SUB		'-'
-#define TOKEN_MUL		'*'
-#define TOKEN_DIV		'/'
-#define TOKEN_AND		'&'
-#define TOKEN_OR		'|'
-#define TOKEN_XOR		'^'
-#define TOKEN_NOT		'~'
+#define TOKEN_IMM			'#'
+#define TOKEN_HEX			'$'
+#define TOKEN_BIN			'%'
+#define TOKEN_BOPEN			'('
+#define TOKEN_BCLOSE		')'
+#define TOKEN_SEPERATOR		','
+#define TOKEN_ADD			'+'
+#define TOKEN_SUB			'-'
+#define TOKEN_MUL			'*'
+#define TOKEN_DIV			'/'
+#define TOKEN_AND			'&'
+#define TOKEN_OR			'|'
+#define TOKEN_XOR			'^'
+#define TOKEN_NOT			'~'
 
 //List of exclusive characters
-#define TAB				"\t"	//Tab character
-#define RETURN			"\n"	//Newline character
-#define SPACE			" "		//Space character
-#define COMMENT			";"		//Comment identifier
+#define TAB					"\t"	//Tab character
+#define RETURN				"\n"	//Newline character
+#define SPACE				" "		//Space character
+#define COMMENT				";"		//Comment identifier
 
-#define VAR_SET			"="		//Assigner for variable data
+#define VAR_SET				"="		//Assigner for variable data
 
 //Command identifiers
 #define COM_NULL		0xFFFF
@@ -130,6 +132,7 @@ enum Z80_keywords {
 	RST,
 	IN,
 	INI,
+	INIR,
 	IND,
 	INDR,
 	OUT,
@@ -195,17 +198,17 @@ enum addr_type {
 };
 
 enum token_type {
+	//Arch specific
+	t_Z80_reg,			//Z80 register
+	t_M68K_reg,			//M68K register
+
 	//universal
+	t_imm,				//Immediate character		#
 	t_number,			//Handles all numbers regardless of type
 	t_ident,			//Identifiers for variables, constants
 	t_bropen,			//Opening bracket,			(
 	t_brclose,			//Closing bracket,			)
 	t_seperator,		//Seperator character		,
-	t_imm,				//Immediate character		#
-
-	//Arch specific
-	t_Z80_reg,			//Z80 register
-	t_M68K_reg,			//M68K register
 
 	//Mathematics
 	t_add,				//Addition character,		+
@@ -227,23 +230,17 @@ extern std::string Z80_register_ident[z80_reg_len];
 
 extern std::string Z80_args_ident[ex_len];
 
-//Variables, defined as
-//
-//	VarName1 = $20
-//	VarName2 = $0210
-//	VarName3 = $100210
-//
-typedef struct {
-	std::string Name;	//Name of variable
-	u32 memloc;			//Memory location of variable
-} VariableDef;
-
 //Definition of labels in code, defined as
 //
 //	MainLabel:
 //		.SubLabel:
 //
 //Every label must end with a : except as arguments for a conditional branch
+//
+//This also includes variables, which are defined as:
+//	VarName1 = $20
+//	VarName2 = $0210
+//	VarName3 = $100210
 //
 typedef struct {
 	std::string Name;	//Name of variable
@@ -263,8 +260,33 @@ typedef struct {
 	u32 value;			//
 } Token;
 
-extern std::vector<VariableDef> Variables;				//Variables list
+typedef struct {
+	Token token[0x0F];
+	u32 opcode;
+} TokenTableEntry;
+
 extern std::vector<LabelDef> Labels;					//Label list
 extern std::vector<std::string> CodeLines;				//List of code lines
 extern std::vector<ComLine> ComList;					//List of parsed commands
 extern arch_type arch;									//Current architecture type
+
+#define LDA_INST_LEN	133
+
+//LD reg, n
+#define LD_LOAD_IMM(_reg, _val)				{ { {t_Z80_reg, _reg},	{t_seperator, 0} ,	{t_number, 0} } ,																									_val}
+//LD reg, reg2
+#define LD_LOAD_REG(_reg, _reg2, _val)		{ { {t_Z80_reg, _reg},	{t_seperator, 0},	{t_Z80_reg, _reg2} } ,																								_val}
+//LD (reg), reg
+#define LD_LOAD_REG_LOC(_reg, _reg2, _val)	{ { {t_bropen, 0},		{t_Z80_reg, _reg},	{t_brclose, 0}, {t_seperator, 0},	{t_Z80_reg, _reg2} } ,															_val}
+//LD [reg], [reg2]
+#define LD_LOAD_REG_PTR(_reg, _reg2, _val)	{ { {t_Z80_reg, _reg},	{t_seperator, 0},	{t_bropen, 0},	{t_Z80_reg, _reg2}, {t_brclose, 0} } ,																_val}
+//LD (nn), reg
+#define LD_LOAD_WLOC_REG(_reg, _val)		{ { {t_bropen, 0},		{t_number, 0},		{t_brclose, 0}, {t_seperator, 0},	{t_Z80_reg, _reg} } ,															_val}
+//LD reg, (nn)
+#define LD_LOAD_REG_WLOC(_reg, _val)		{ { {t_Z80_reg, _reg},	{t_seperator, 0},	{t_bropen, 0},	{t_number, 0},		{t_brclose, 0} } ,																_val}
+//LD (reg+d), n
+#define LD_LOAD_INDpD_IMM(_reg, _val)		{ { {t_bropen, 0},		{t_Z80_reg, _reg},	{t_add, 0},		{t_number, 0},		{t_brclose, 0},		{t_seperator, 0},	{t_number, 0},	} ,						_val}
+//LD (reg+d), reg
+#define LD_LOAD_INDpD_REG(_reg, _reg2, _val){ { {t_bropen, 0},		{t_Z80_reg, _reg},	{t_add, 0},		{t_number, 0},		{t_brclose, 0},		{t_seperator, 0},	{t_Z80_reg, _reg2},	} ,					_val}
+//LD reg, (reg+d)
+#define LD_LOAD_REG_INDpD(_reg, _reg2, _val){ { {t_Z80_reg, _reg},	{t_seperator, 0},	{t_bropen, 0},	{t_Z80_reg, _reg2},	{t_add, 0},			{t_number, 0},		{t_brclose, 0},	} ,						_val}
